@@ -1,101 +1,160 @@
-import Image from "next/image";
+import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
+import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="flex min-h-screen flex-col">
+      {/* Navigation */}
+      <SiteHeader />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="relative bg-slate-800 text-white">
+          <div className="absolute inset-0 bg-[url('/images/cover_page.png')] bg-cover bg-center opacity-30"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+          <div className="container relative mx-auto px-4 py-24 md:py-32">
+            <div className="mx-auto max-w-3xl text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <div className="h-24 w-24 relative">
+                  <svg viewBox="0 0 100 100" className="fill-white">
+                    <path d="M50 0L93.3 25V75L50 100L6.7 75V25L50 0z" />
+                    <path d="M35 30L65 50L35 70V30z" fill="currentColor" />
+                  </svg>
+                </div>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">COLLECTOR'S CORNER</h1>
+              <p className="mt-4 text-lg">
+                Welcome to Collector's Corner! Here to provide you the best collectible products at the best prices.
+              </p>
+              <div className="mt-8">
+                <Button
+                  variant="outline"
+                  className="rounded-md border-white text-white hover:bg-white hover:text-slate-800"
+                >
+                  Learn more &gt;
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* What's New Section */}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-8">WHAT'S NEW!</h2>
+
+            <div className="space-y-6">
+              {/* Card 1 */}
+              <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-shrink-0">
+                      <Image
+                        src="/images/best_grade.png"
+                        alt="Best Cards to Grade"
+                        width={150}
+                        height={150}
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">BEST CARDS TO GRADE!</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Don't know which card to grade and enhance your prized collection? Collector's Corner recommends
+                        these 3 cards from the Sword and Shield era...
+                      </p>
+                      <Button variant="outline" size="sm">
+                        Learn more &gt;
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 2 */}
+              <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-shrink-0 relative">
+                      <div className="absolute -top-2 -left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        NEW!
+                      </div>
+                      <Image
+                        src="/images/pre_alert.png"
+                        alt="Pre-order Alert"
+                        width={150}
+                        height={150}
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">PRE-ORDER ALERT!</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Collector's Corner's is now offering pre-order for Scarlet and Violet Stellar Crown! Hunt for
+                        the prized hits of Teragagos, Starters and more!
+                      </p>
+                      <Button variant="outline" size="sm">
+                        Learn more &gt;
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 3 */}
+              <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-shrink-0">
+                      <Image
+                        src="/images/week_bazaar.png"
+                        alt="Weekend Bazaar"
+                        width={150}
+                        height={150}
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">WEEKEND BAZAAR!</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Our binders, stash, and slabs are all stocked up to give you trainers the best possible Pokemon
+                        pieces! See you trainers at Festival Mall from March 22-23 and let's talk all about Pokemon and
+                        collectibles!
+                      </p>
+                      <Button variant="outline" size="sm">
+                        Learn more &gt;
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Newsletter Section */}
+        <section className="py-12 border-t">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <h2 className="text-2xl font-bold">Sign up for more updates!</h2>
+              <div className="flex gap-2">
+                <Button asChild variant="default" className="bg-black text-white hover:bg-gray-800">
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+                <Button variant="outline">Subscribe</Button>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      {/* Footer */}
+      <SiteFooter />
     </div>
-  );
+  )
 }
+
