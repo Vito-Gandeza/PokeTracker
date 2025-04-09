@@ -119,8 +119,8 @@ export default function EnhancedCardGrid({
 }: EnhancedCardGridProps) {
   // Initialize with fallback data
   const fallbackCards = generateFallbackCards();
-  const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))];
-  const fallbackRarities = [...new Set(fallbackCards.map(card => card.rarity))];
+  const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
+  const fallbackRarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
 
   const [cards, setCards] = useState<CardProduct[]>(fallbackCards);
   const [loading, setLoading] = useState(false); // Start with loading false since we have fallback data
@@ -193,8 +193,8 @@ export default function EnhancedCardGrid({
           setCards(data);
 
           // Extract unique sets and rarities for filters
-          const sets = [...new Set(data.map(card => card.set_name))];
-          const rarities = [...new Set(data.map(card => card.rarity))];
+          const sets = [...new Set(data.map(card => card.set_name))] as string[];
+          const rarities = [...new Set(data.map(card => card.rarity))] as string[];
 
           setAvailableSets(sets);
           setAvailableRarities(rarities);
@@ -204,8 +204,8 @@ export default function EnhancedCardGrid({
           setCards(fallbackCards);
 
           // Extract unique sets and rarities for filters from fallback data
-          const sets = [...new Set(fallbackCards.map(card => card.set_name))];
-          const rarities = [...new Set(fallbackCards.map(card => card.rarity))];
+          const sets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
+          const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
 
           setAvailableSets(sets);
           setAvailableRarities(rarities);
@@ -217,8 +217,8 @@ export default function EnhancedCardGrid({
         setCards(fallbackCards);
 
         // Extract unique sets and rarities for filters from fallback data
-        const sets = [...new Set(fallbackCards.map(card => card.set_name))];
-        const rarities = [...new Set(fallbackCards.map(card => card.rarity))];
+        const sets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
+        const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
 
         setAvailableSets(sets);
         setAvailableRarities(rarities);

@@ -206,8 +206,8 @@ export default function OrganizedCardCollection({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   // Initialize with fallback data
   const fallbackCards = generateFallbackCards();
-  const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))];
-  const fallbackRarities = [...new Set(fallbackCards.map(card => card.rarity))];
+  const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
+  const fallbackRarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
 
   const [cards, setCards] = useState<CardProduct[]>(fallbackCards);
   const [loading, setLoading] = useState(false); // Start with loading false since we have fallback data
@@ -237,7 +237,7 @@ export default function OrganizedCardCollection({
 
         if (isMounted && data) {
           // Extract unique set names
-          const uniqueSets = [...new Set(data.map(card => card.set_name))];
+          const uniqueSets = [...new Set(data.map((card: CardProduct) => card.set_name))] as string[];
           setAvailableSets(uniqueSets);
           console.log(`OrganizedCardCollection: Found ${uniqueSets.length} unique sets`);
         }
@@ -345,7 +345,7 @@ export default function OrganizedCardCollection({
           setCards(cardsToDisplay);
 
           // Extract unique rarities for filters
-          const rarities = [...new Set(data.map(card => card.rarity))];
+          const rarities = [...new Set(data.map((card: CardProduct) => card.rarity))] as string[];
           setAvailableRarities(rarities);
 
           // Initialize expanded state for all sets
@@ -361,7 +361,7 @@ export default function OrganizedCardCollection({
           setCards(fallbackCards);
 
           // Extract unique rarities for filters from fallback data
-          const rarities = [...new Set(fallbackCards.map(card => card.rarity))];
+          const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
           setAvailableRarities(rarities);
 
           // Initialize expanded state for all sets
@@ -381,7 +381,7 @@ export default function OrganizedCardCollection({
           setCards(fallbackCards);
 
           // Extract unique rarities for filters from fallback data
-          const rarities = [...new Set(fallbackCards.map(card => card.rarity))];
+          const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
           setAvailableRarities(rarities);
 
           // Initialize expanded state for all sets
