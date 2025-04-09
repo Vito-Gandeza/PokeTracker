@@ -3,7 +3,7 @@
 import type React from "react"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import supabase from "@/lib/supabase"
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -31,23 +31,23 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    
+
     // Validation
     if (password !== confirmPassword) {
       setError("Passwords don't match")
       setIsLoading(false)
       return
     }
-    
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters")
       setIsLoading(false)
       return
     }
-    
+
     try {
       const { error } = await supabase.auth.updateUser({ password })
-      
+
       if (error) {
         setError(error.message)
       } else {
@@ -122,8 +122,8 @@ export default function ResetPasswordPage() {
                         disabled={isLoading}
                       />
                     </div>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full bg-black hover:bg-gray-800"
                       disabled={isLoading}
                     >
@@ -150,4 +150,12 @@ export default function ResetPasswordPage() {
       <SiteFooter />
     </div>
   )
-} 
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen flex-col items-center justify-center">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
+  )
+}
