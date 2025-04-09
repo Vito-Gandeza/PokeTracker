@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import supabase from "@/lib/supabase"
-import { 
-  LayoutDashboard, 
-  Users, 
-  Database, 
+import {
+  LayoutDashboard,
+  Users,
+  Database,
   Settings,
   PackageOpen,
   ChevronRight
@@ -17,7 +17,7 @@ import {
 import Link from "next/link"
 
 export default function AdminDashboard() {
-  const { userProfile, refreshUserProfile } = useAuth()
+  const { userProfile } = useAuth()
   const [userId, setUserId] = useState('')
   const [adminToolVisible, setAdminToolVisible] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
@@ -30,10 +30,10 @@ export default function AdminDashboard() {
   const setUserAsAdmin = async () => {
     try {
       setStatusMessage('Processing...')
-      
+
       // First get the user by ID or email
       let targetId = userId
-      
+
       // If it looks like an email, look up the user ID
       if (userId.includes('@')) {
         const { data, error } = await supabase
@@ -41,42 +41,42 @@ export default function AdminDashboard() {
           .select('id')
           .eq('email', userId)
           .single()
-          
+
         if (error || !data) {
           setStatusMessage(`Error: User not found with email ${userId}`)
           return
         }
-        
+
         targetId = data.id
       }
-      
+
       // Update the user's admin status in the database
       const { error } = await supabase
         .from('users')
-        .update({ 
+        .update({
           is_admin: true,
-          role: 'admin' 
+          role: 'admin'
         })
         .eq('id', targetId)
-        
+
       if (error) {
         setStatusMessage(`Error setting admin status: ${error.message}`)
         return
       }
-      
+
       // Try to set JWT claims (requires service role)
       try {
         // Note: This requires service role permissions
         const { error: claimsError } = await supabase.auth.admin.updateUserById(
           targetId,
           {
-            app_metadata: { 
+            app_metadata: {
               role: 'admin',
               is_admin: true
             }
           }
         )
-        
+
         if (claimsError) {
           setStatusMessage(`User DB updated but JWT claims failed: ${claimsError.message}. User will need to log out and back in.`)
           return
@@ -85,12 +85,14 @@ export default function AdminDashboard() {
         setStatusMessage(`User DB updated but JWT update requires server function. User will need to log out and back in.`)
         return
       }
-      
+
       // Force refresh profile if this is the current user
       if (userProfile?.id === targetId) {
-        await refreshUserProfile()
+        // User will need to log out and back in to see changes
+        setStatusMessage(`Success! User set as admin. You'll need to log out and back in to see changes.`)
+        return
       }
-      
+
       setStatusMessage(`Success! User set as admin with full permissions`)
     } catch (err: any) {
       setStatusMessage(`Error: ${err.message}`)
@@ -101,10 +103,10 @@ export default function AdminDashboard() {
     try {
       setIsProcessing(true)
       setStatusMessage('Processing via server API...')
-      
+
       // First get the user by ID or email
       let targetId = userId
-      
+
       // If it looks like an email, look up the user ID
       if (userId.includes('@')) {
         const { data, error } = await supabase
@@ -112,16 +114,16 @@ export default function AdminDashboard() {
           .select('id')
           .eq('email', userId)
           .single()
-          
+
         if (error || !data) {
           setStatusMessage(`Error: User not found with email ${userId}`)
           setIsProcessing(false)
           return
         }
-        
+
         targetId = data.id
       }
-      
+
       // Call the server API endpoint
       const response = await fetch('/api/admin/set-admin', {
         method: 'POST',
@@ -133,9 +135,9 @@ export default function AdminDashboard() {
           adminSecret: 'admin-setup-secret'
         }),
       })
-      
+
       const result = await response.json()
-      
+
       if (!response.ok) {
         setStatusMessage(`API Error: ${result.error || 'Unknown error'}`)
         if (result.partialSuccess) {
@@ -143,10 +145,12 @@ export default function AdminDashboard() {
         }
       } else {
         setStatusMessage(`Success! User fully set as admin with JWT claims.`)
-        
+
         // Force refresh profile if this is the current user
         if (userProfile?.id === targetId) {
-          await refreshUserProfile()
+          // User will need to log out and back in to see changes
+          setStatusMessage(`Success! User fully set as admin with JWT claims. You'll need to log out and back in to see changes.`)
+          return
         }
       }
     } catch (err: any) {
@@ -196,31 +200,31 @@ export default function AdminDashboard() {
             Welcome back, {userProfile?.email || "Admin"}
           </p>
         </div>
-        
+
         <Button onClick={toggleAdminTool} variant="outline">
           {adminToolVisible ? 'Hide Admin Tools' : 'Admin Tools'}
         </Button>
       </header>
-      
+
       {adminToolVisible && (
         <Card className="p-4 bg-slate-50 border border-slate-200">
           <h2 className="text-lg font-semibold mb-2">Admin User Management</h2>
           <div className="flex gap-2 mb-2 flex-wrap">
-            <Input 
-              placeholder="User ID or Email" 
+            <Input
+              placeholder="User ID or Email"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               className="max-w-md"
             />
-            <Button 
-              onClick={setUserAsAdmin} 
+            <Button
+              onClick={setUserAsAdmin}
               variant="default"
               disabled={isProcessing || !userId}
             >
               Set as Admin (DB Only)
             </Button>
-            <Button 
-              onClick={setUserAsAdminServerSide} 
+            <Button
+              onClick={setUserAsAdminServerSide}
               variant="default"
               disabled={isProcessing || !userId}
               className="bg-blue-600 hover:bg-blue-700"
@@ -271,4 +275,4 @@ export default function AdminDashboard() {
       </section>
     </div>
   )
-} 
+}
