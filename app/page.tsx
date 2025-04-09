@@ -28,18 +28,7 @@ const AnimatedShapes = dynamic(
 let gsap: any;
 let ScrollTrigger: any;
 
-if (typeof window !== "undefined") {
-  // Only import GSAP on the client side
-  import("gsap").then((module) => {
-    gsap = module.default;
-    // Import ScrollTrigger
-    import("gsap/ScrollTrigger").then((module) => {
-      ScrollTrigger = module.ScrollTrigger;
-      // Register the plugin
-      gsap.registerPlugin(ScrollTrigger);
-    });
-  });
-}
+// We'll load GSAP in useEffect instead of here
 
 export default function Home() {
   const heroRef = useRef(null);
@@ -54,26 +43,46 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Animate sections on scroll
-    sectionRefs.current.forEach((section) => {
-      if (!section) return;
+    // Load GSAP and ScrollTrigger
+    const loadGSAP = async () => {
+      try {
+        // Import GSAP
+        const gsapModule = await import("gsap");
+        gsap = gsapModule.default || gsapModule;
 
-      gsap.fromTo(
-        section,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          scrollTrigger: {
-            trigger: section,
-            start: "top 80%",
-            end: "bottom 20%",
-            toggleActions: "play none none reverse"
-          }
-        }
-      );
-    });
+        // Import ScrollTrigger
+        const scrollTriggerModule = await import("gsap/ScrollTrigger");
+        ScrollTrigger = scrollTriggerModule.ScrollTrigger;
+
+        // Register the plugin
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Now that GSAP is loaded, animate sections
+        sectionRefs.current.forEach((section) => {
+          if (!section) return;
+
+          gsap.fromTo(
+            section,
+            { opacity: 0, y: 50 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              scrollTrigger: {
+                trigger: section,
+                start: "top 80%",
+                end: "bottom 20%",
+                toggleActions: "play none none reverse"
+              }
+            }
+          );
+        });
+      } catch (error) {
+        console.error("Error loading GSAP:", error);
+      }
+    };
+
+    loadGSAP();
 
     // Cleanup
     return () => {
