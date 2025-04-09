@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 export default function TestPage() {
     const [connectionStatus, setConnectionStatus] = useState<string>('Testing...');
@@ -14,7 +14,7 @@ export default function TestPage() {
         const checkEnv = () => {
             const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-            
+
             if (!url || !key) {
                 setEnvStatus('Missing environment variables. Please check your .env file.');
                 setError('Required environment variables are missing. Check the console for details.');
@@ -23,7 +23,7 @@ export default function TestPage() {
                 if (!key) console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY');
                 return false;
             }
-            
+
             setEnvStatus('Environment variables are set correctly.');
             return true;
         };
@@ -32,7 +32,8 @@ export default function TestPage() {
             if (!checkEnv()) return;
 
             try {
-                // Test regular client
+                // Create a client and test connection
+                const supabase = createClient();
                 const { data, error } = await supabase
                     .from('cards')
                     .select('*')
@@ -64,7 +65,7 @@ export default function TestPage() {
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Supabase Connection Test</h1>
-            
+
             <div className="mb-4">
                 <h2 className="text-xl font-semibold mb-2">Environment Variables</h2>
                 <p className="mb-2">Status: {envStatus}</p>
@@ -94,4 +95,4 @@ export default function TestPage() {
             )}
         </div>
     );
-} 
+}

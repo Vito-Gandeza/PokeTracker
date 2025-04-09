@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
+
+// Create a client for testing
+const supabase = createClient();
 
 export async function GET() {
     try {
@@ -17,33 +20,15 @@ export async function GET() {
             );
         }
 
-        // Test admin client only if it's available
-        let users = null;
-        let usersError = null;
-
-        if (supabaseAdmin) {
-            const result = await supabaseAdmin
-                .from('profiles')
-                .select('*')
-                .limit(1);
-            users = result.data;
-            usersError = result.error;
-
-            if (usersError) {
-                console.error('Admin client error:', usersError);
-                return NextResponse.json(
-                    { error: 'Admin client connection failed', details: usersError },
-                    { status: 500 }
-                );
-            }
-        }
+        // We're not testing admin client in this version
+        const users = null;
 
         return NextResponse.json({
             success: true,
             message: 'Supabase connection is working correctly',
             cards: cards,
             users: users,
-            adminAvailable: !!supabaseAdmin
+            adminAvailable: false
         });
     } catch (error) {
         console.error('Test connection error:', error);
@@ -52,4 +37,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-} 
+}
