@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useCurrency } from '@/lib/currency-context';
 import {
   Select,
   SelectContent,
@@ -200,6 +201,8 @@ export default function OrganizedCardCollection({
   initialLimit = 50,
   groupBySet = false
 }: OrganizedCardCollectionProps) {
+  // Get currency context
+  const { formatPrice } = useCurrency();
   // State for pagination
   const [limit, setLimit] = useState(initialLimit);
   const [hasMore, setHasMore] = useState(true);
@@ -726,7 +729,7 @@ export default function OrganizedCardCollection({
                               )}
                             </CardContent>
                             <CardFooter className="p-3 pt-0 bg-white/80 dark:bg-black/80">
-                              <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+                              <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
                             </CardFooter>
                           </Card>
                         </Link>
@@ -776,7 +779,7 @@ export default function OrganizedCardCollection({
                     )}
                   </CardContent>
                   <CardFooter className="p-3 pt-0 bg-white/80 dark:bg-black/80">
-                    <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+                    <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
                   </CardFooter>
                 </Card>
               </Link>

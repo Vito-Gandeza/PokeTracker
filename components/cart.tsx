@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Plus, Minus, ShoppingCart, LogIn, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
+import { useCurrency } from '@/lib/currency-context';
 
 interface StockInfo {
   [key: string]: {
@@ -23,6 +24,9 @@ export default function Cart() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
   const [stockInfo, setStockInfo] = useState<StockInfo>({});
@@ -194,7 +198,7 @@ export default function Cart() {
                 </div>
                 <div>
                   <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
                   {itemStock && (
                     <p className={`text-xs ${isOverLimit ? 'text-red-500 font-semibold' : 'text-green-600'}`}>
                       {isOverLimit
@@ -241,7 +245,7 @@ export default function Cart() {
       <CardFooter className="flex flex-col space-y-4">
         <div className="flex justify-between w-full">
           <span className="font-medium">Total:</span>
-          <span className="font-bold">${totalPrice.toFixed(2)}</span>
+          <span className="font-bold">{formatPrice(totalPrice)}</span>
         </div>
         {isAuthenticated ? (
           <Button

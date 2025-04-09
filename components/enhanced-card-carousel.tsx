@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Star, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { useCurrency } from '@/lib/currency-context';
 
 interface CardProduct {
   id: string;
@@ -137,6 +138,9 @@ export default function EnhancedCardCarousel({
   viewAllLink = "/shop/all-cards",
   viewAllText = "View All Cards"
 }: EnhancedCardCarouselProps) {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   const [cards, setCards] = useState<CardProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -460,7 +464,7 @@ export default function EnhancedCardCarousel({
                     </CardContent>
 
                     <CardFooter className="p-3 pt-0 bg-white/80 dark:bg-black/80">
-                      <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+                      <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
                       {hoveredCard === `${card.id}-${index}` && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.8 }}

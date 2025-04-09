@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase"
 import CartIndicator from "@/components/cart-indicator"
+import { CurrencySwitcher } from "@/components/currency-switcher"
 import { motion } from "framer-motion"
 import { Search, Menu } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -114,6 +115,10 @@ export function SiteHeader() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-3">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <CurrencySwitcher />
+          </motion.div>
+
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <CartIndicator />
           </motion.div>

@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { CartProvider } from "@/context/cart-context"
+import { CurrencyProvider } from "@/lib/currency-context"
 import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -25,8 +26,10 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
-              {children}
-              <Toaster />
+              <CurrencyProvider>
+                {children}
+                <Toaster />
+              </CurrencyProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

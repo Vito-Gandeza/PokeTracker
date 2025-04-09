@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useCurrency } from '@/lib/currency-context';
 import {
   Select,
   SelectContent,
@@ -117,6 +118,9 @@ export default function EnhancedCardGrid({
   showFilters = true,
   limit = 24
 }: EnhancedCardGridProps) {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   // Initialize with fallback data
   const fallbackCards = generateFallbackCards();
   const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
@@ -396,7 +400,7 @@ export default function EnhancedCardGrid({
                 )}
               </CardContent>
               <CardFooter className="p-3 pt-0">
-                <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+                <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
               </CardFooter>
             </Card>
           </Link>

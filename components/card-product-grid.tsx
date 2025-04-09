@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase';
+import { useCurrency } from '@/lib/currency-context';
 
 interface CardProduct {
   id: string;
@@ -16,6 +17,9 @@ interface CardProduct {
 }
 
 export default function CardProductGrid() {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   const [cards, setCards] = useState<CardProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +73,7 @@ export default function CardProductGrid() {
               <p className="text-xs text-muted-foreground capitalize">{card.rarity}</p>
             </CardContent>
             <CardFooter className="p-3 pt-0">
-              <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+              <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
             </CardFooter>
           </Card>
         </Link>

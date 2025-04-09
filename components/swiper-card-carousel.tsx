@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase';
+import { useCurrency } from '@/lib/currency-context';
 
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -83,6 +84,9 @@ function generateFallbackCards(): CardProduct[] {
 export default function SwiperCardCarousel({
   limit = 16
 }: SwiperCardCarouselProps) {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   const [cards, setCards] = useState<GroupedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const swiperRef = useRef<HTMLDivElement>(null);
@@ -261,7 +265,7 @@ export default function SwiperCardCarousel({
                   <p className="text-xs text-muted-foreground line-clamp-1">{card.set_name}</p>
                 </CardContent>
                 <CardFooter className="p-2 pt-0 bg-white/80 dark:bg-black/80">
-                  <div className="text-sm font-bold">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+                  <div className="text-sm font-bold">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
                 </CardFooter>
               </Card>
             </Link>

@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter, ArrowUpDown, TrendingUp, ChevronDown, X, Sparkles } from "lucide-react";
+import { useCurrency } from "@/lib/currency-context";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import {
   Select,
   SelectContent,
@@ -110,6 +112,9 @@ interface FilterOption {
 type SortOption = "newest" | "price-low" | "price-high" | "popularity";
 
 export default function PriceTrackerGallery() {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   // States
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
@@ -371,10 +376,10 @@ export default function PriceTrackerGallery() {
     fetchCards(true);
   };
 
-  // Format price display
-  const formatPrice = (price: number | undefined) => {
+  // Helper function to handle undefined prices
+  const getFormattedPrice = (price: number | undefined) => {
     if (!price) return "N/A";
-    return `$${price.toFixed(2)}`;
+    return formatPrice(price);
   };
 
   // Card animation variants
@@ -415,6 +420,8 @@ export default function PriceTrackerGallery() {
             </div>
 
             <div className="flex gap-2">
+              <CurrencySwitcher />
+
               <Select value={activeSort} onValueChange={(value) => setActiveSort(value as SortOption)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Sort by" />
@@ -624,7 +631,7 @@ export default function PriceTrackerGallery() {
                         className="object-contain hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm font-medium">
-                        {formatPrice(getCardPrice(card))}
+                        {getFormattedPrice(getCardPrice(card))}
                       </div>
                     </div>
                     <CardContent className="p-4 flex-grow flex flex-col justify-between">

@@ -6,8 +6,10 @@ import Link from "next/link"
 import PriceTrackerGallery from "@/components/price-tracker-gallery"
 import { motion } from "framer-motion"
 import { TrendingUp, LineChart, DollarSign, BarChart3 } from "lucide-react"
+import { useCurrency } from "@/lib/currency-context"
 
 export default function PriceTracker() {
+  const { formatPrice } = useCurrency();
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero Section */}
@@ -78,7 +80,7 @@ export default function PriceTracker() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Avg. Card Value</p>
-                  <p className="text-2xl font-bold">$42.80</p>
+                  <p className="text-2xl font-bold">{formatPrice(42.80)}</p>
                 </div>
               </div>
             </motion.div>

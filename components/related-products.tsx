@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
+import { useCurrency } from '@/lib/currency-context';
 
 interface RelatedProduct {
   id: string;
@@ -27,6 +28,9 @@ interface RelatedProductsProps {
 }
 
 export default function RelatedProducts({ products }: RelatedProductsProps) {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   const [groupedProducts, setGroupedProducts] = useState<GroupedProduct[]>([]);
 
   // Group products by name, set, and card number to show quantity
@@ -101,7 +105,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
                 <p className="text-xs text-muted-foreground line-clamp-1">{product.description || product.set_name}</p>
               </CardContent>
               <CardFooter className="p-3 pt-0">
-                <div className="text-sm font-bold">${product.price.toFixed(2)}</div>
+                <div className="text-sm font-bold">{formatPrice(product.price)}</div>
               </CardFooter>
             </Card>
           </Link>

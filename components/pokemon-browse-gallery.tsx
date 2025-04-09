@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card as CardUI } from "@/components/ui/card"
 import * as PokemonTCG from "pokemon-tcg-sdk-typescript"
+import { useCurrency } from "@/lib/currency-context"
 
 // API key configuration (in production, use environment variables)
 const API_KEY = "d2cf1828-877c-4f8d-947c-7377dfb810be"
@@ -35,6 +36,9 @@ if (typeof window === 'undefined') {
 }
 
 export default function PokemonBrowseGallery() {
+  // Get currency context
+  const { formatPrice } = useCurrency();
+
   // States
   const [cards, setCards] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -264,15 +268,15 @@ export default function PokemonBrowseGallery() {
       const prices = Object.values(card.tcgplayer.prices) as CardPrice[]
       if (prices.length > 0) {
         const price = Math.min(...prices.map(p => p.market || p.mid || p.low || 0).filter(p => p > 0))
-        return price > 0 ? `$${price.toFixed(2)}` : "$0"
+        return formatPrice(price)
       }
     } else if (card.cardmarket && card.cardmarket.prices) {
       const price = card.cardmarket.prices.averageSellPrice ||
                     card.cardmarket.prices.trendPrice ||
                     0
-      return price > 0 ? `${price.toFixed(2)} €` : "€0"
+      return formatPrice(price)
     }
-    return "$0"
+    return formatPrice(0)
   }
 
   // Reset all filters
