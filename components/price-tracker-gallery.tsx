@@ -199,8 +199,17 @@ export default function PriceTrackerGallery() {
         queryParams.append('orderBy', orderBy);
       }
 
-      // Make API request
-      const response = await fetch(`https://api.pokemontcg.io/v2/cards?${queryParams.toString()}`, {
+      // Make API request - ensure we're getting a comprehensive set of cards
+      // If no specific set filters are applied, we'll use a broader query to ensure we get cards from all sets
+      let apiUrl = `https://api.pokemontcg.io/v2/cards?${queryParams.toString()}`;
+
+      // If we're on the first page and no specific sets are selected, ensure we get a diverse selection of cards
+      if (page === 1 && selectedSets.length === 0 && !searchQuery && selectedRarities.length === 0) {
+        // Add a parameter to ensure we get cards from different sets
+        apiUrl += '&orderBy=set.releaseDate';
+      }
+
+      const response = await fetch(apiUrl, {
         headers: {
           'X-Api-Key': API_KEY
         }
@@ -233,11 +242,45 @@ export default function PriceTrackerGallery() {
       // Check if there are more items
       setHasMore(data.data.length === pageSize);
 
+      // Process the data to ensure we have a diverse selection of cards
+      let processedData = filteredData;
+
+      // If no specific filters are applied, ensure we have cards from different sets
+      if (selectedSets.length === 0 && !searchQuery && selectedRarities.length === 0 && !isLoadMore) {
+        // Group cards by set to ensure diversity
+        const setGroups = new Map();
+
+        // First pass: group cards by set
+        filteredData.forEach(card => {
+          const setName = card.set?.name || 'Unknown';
+          if (!setGroups.has(setName)) {
+            setGroups.set(setName, []);
+          }
+          setGroups.get(setName).push(card);
+        });
+
+        console.log(`Found cards from ${setGroups.size} different sets`);
+
+        // Second pass: take a few cards from each set to ensure diversity
+        const diverseSelection = [];
+        setGroups.forEach((cards, setName) => {
+          // Take up to 4 cards from each set
+          const setCards = cards.slice(0, 4);
+          diverseSelection.push(...setCards);
+        });
+
+        // If we have enough sets, use the diverse selection
+        if (diverseSelection.length >= 12) {
+          processedData = diverseSelection;
+          console.log(`Using diverse selection with ${processedData.length} cards from ${setGroups.size} sets`);
+        }
+      }
+
       // Update the cards state
       if (isLoadMore) {
-        setCards(prevCards => [...prevCards, ...filteredData]);
+        setCards(prevCards => [...prevCards, ...processedData]);
       } else {
-        setCards(filteredData);
+        setCards(processedData);
       }
 
       // If this is the initial load, fetch sets and rarities
@@ -297,8 +340,14 @@ export default function PriceTrackerGallery() {
         .map((set: any) => ({
           label: `${set.name} (${set.series})`,
           value: set.name,
-          checked: false
+          checked: false,
+          id: set.id,
+          releaseDate: set.releaseDate
         }));
+
+      console.log(`Available sets for filtering: ${sets.map(s => s.value).join(', ')}`);
+
+      // Store the complete set data for potential use in filtering
 
       setAvailableSets(sets);
 
@@ -338,6 +387,11 @@ export default function PriceTrackerGallery() {
 
   // Load cards on initial render and when filters change
   useEffect(() => {
+    // Reset to page 1 when filters change (except when explicitly changing page)
+    if (page !== 1 && !isLoadingMore) {
+      setPage(1);
+      return; // The page change will trigger this effect again
+    }
     fetchCards();
   }, [searchQuery, activeSort, selectedSets, selectedRarities, priceRange, page]);
 
@@ -485,22 +539,51 @@ export default function PriceTrackerGallery() {
                       </AccordionItem>
 
                       <AccordionItem value="sets">
-                        <AccordionTrigger>Card Sets</AccordionTrigger>
+                        <AccordionTrigger>Card Sets ({availableSets.length})</AccordionTrigger>
                         <AccordionContent>
                           <div className="pt-2">
                             <Input
                               type="text"
                               placeholder="Search sets..."
                               className="mb-2"
+                              id="set-search"
                               onChange={(e) => {
                                 const searchTerm = e.target.value.toLowerCase();
-                                const filteredSets = availableSets.filter(set =>
-                                  set.label.toLowerCase().includes(searchTerm)
-                                );
                                 // We don't actually filter the availableSets state, just visually filter in the UI
+                                const setSearchResults = document.getElementById('set-search-results');
+                                if (setSearchResults) {
+                                  Array.from(setSearchResults.children).forEach((child: Element) => {
+                                    const label = child.querySelector('label');
+                                    if (label && label.textContent) {
+                                      if (label.textContent.toLowerCase().includes(searchTerm)) {
+                                        (child as HTMLElement).style.display = '';
+                                      } else {
+                                        (child as HTMLElement).style.display = 'none';
+                                      }
+                                    }
+                                  });
+                                }
                               }}
                             />
-                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                            <div className="flex justify-between mb-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedSets(availableSets.map(s => s.value))}
+                                className="text-xs"
+                              >
+                                Select All
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedSets([])}
+                                className="text-xs"
+                              >
+                                Clear All
+                              </Button>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2" id="set-search-results">
                               {availableSets.map((set) => (
                                 <div key={set.value} className="flex items-center space-x-2 py-1 border-b border-gray-100 dark:border-gray-800 last:border-0">
                                   <Checkbox
@@ -576,6 +659,29 @@ export default function PriceTrackerGallery() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4" ref={cardsContainerRef}>
+        {/* Display current sets info */}
+        {!loading && !error && cards.length > 0 && (
+          <motion.div
+            className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h3 className="text-lg font-medium mb-2 flex items-center">
+              <Sparkles className="mr-2 h-5 w-5 text-blue-500" />
+              Sets in Current View
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {Array.from(new Set(cards.map(card => card.set?.name))).sort().map(setName => (
+                setName && (
+                  <Badge key={setName} variant="secondary" className="px-3 py-1">
+                    {setName}
+                  </Badge>
+                )
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {loading && !isLoadingMore ? (
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
