@@ -1,8 +1,13 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 // Get environment variables
-const supabaseUrl = 'https://znvwokdnmwbkuavsxqin.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpudndva2RubXdia3VhdnN4cWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0NzIzMDgsImV4cCI6MjA1OTA0ODMwOH0.b_eCyATar91JCAeE4CPjS3eNKoCclSVqTLPOW2UW-0Q'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// Verify environment variables
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+  console.warn('Missing Supabase environment variables. Authentication may not work properly.')
+}
 
 // Create a browser client (singleton with better handling for SPA navigation)
 let browserClient: ReturnType<typeof createBrowserClient> | null = null

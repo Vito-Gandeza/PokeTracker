@@ -2,9 +2,9 @@ import { User, Session, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
-const supabaseUrl = 'https://znvwokdnmwbkuavsxqin.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpudndva2RubXdia3VhdnN4cWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0NzIzMDgsImV4cCI6MjA1OTA0ODMwOH0.b_eCyATar91JCAeE4CPjS3eNKoCclSVqTLPOW2UW-0Q';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpudndva2RubXdia3VhdnN4cWluIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzQ3MjMwOCwiZXhwIjoyMDU5MDQ4MzA4fQ.UpqfFOgyzSLPrZDe_XQnYV6sUpx2G5EKAA86mD_c5Ns';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Create a singleton instance of the main client
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -75,7 +75,7 @@ export async function signUp({ email, password, fullName, username }: SignUpCred
         },
       },
     });
-    
+
     return {
       user: data?.user || null,
       session: data?.session || null,
@@ -100,7 +100,7 @@ export async function login({ email, password }: LoginCredentials): Promise<Auth
       email,
       password,
     });
-    
+
     return {
       user: data?.user || null,
       session: data?.session || null,
@@ -125,18 +125,18 @@ export async function logout(): Promise<{ error: AuthError | null }> {
     // First, manually check if we have a session to log out from
     const session = await getCurrentSession();
     console.log('DEBUG: Current session before logout:', session ? 'exists' : 'none');
-    
+
     // Then call Supabase signOut
-    const { error } = await supabase.auth.signOut({ 
+    const { error } = await supabase.auth.signOut({
       scope: 'global' // This will clear all sessions across all tabs/devices
     });
-    
+
     if (error) {
       console.error('DEBUG: Supabase signOut error:', error);
     } else {
       console.log('DEBUG: Supabase signOut successful');
     }
-    
+
     return { error };
   } catch (err) {
     console.error('Logout error:', err);
@@ -208,9 +208,9 @@ export async function getAdminStatusFromClaims(): Promise<boolean> {
   try {
     const { data } = await supabase.auth.getUser();
     const user = data.user;
-    
+
     if (!user) return false;
-    
+
     // Check app_metadata for admin claims
     return user.app_metadata?.is_admin === true;
   } catch (err) {
@@ -227,24 +227,24 @@ export async function checkAdminStatusDirect(userId: string): Promise<boolean> {
   try {
     // Create a temporary client with the service role key
     const serviceClient = createServiceClient();
-    
+
     if (!serviceClient) {
       console.error('Could not create service client - missing credentials');
       return false;
     }
-    
+
     // This query bypasses RLS
     const { data, error } = await serviceClient
       .from('users')
       .select('is_admin')
       .eq('id', userId)
       .single();
-    
+
     if (error) {
       console.error('Error in direct admin check:', error);
       return false;
     }
-    
+
     return data?.is_admin === true;
   } catch (err) {
     console.error('Error in direct admin check:', err);
@@ -262,7 +262,7 @@ export async function setAdminClaims(userId: string, isAdmin: boolean): Promise<
     const { error } = await supabase.auth.admin.updateUserById(
       userId,
       {
-        app_metadata: { 
+        app_metadata: {
           role: isAdmin ? 'admin' : 'user',
           is_admin: isAdmin
         }
@@ -288,4 +288,4 @@ export function onAuthStateChange(callback: (session: Session | null) => void) {
   return supabase.auth.onAuthStateChange((_, session) => {
     callback(session);
   });
-} 
+}
