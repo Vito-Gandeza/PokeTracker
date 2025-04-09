@@ -83,7 +83,7 @@ export default function AdminCardsPage() {
           // Group cards by name, set, and card number
           const groupedCards: { [key: string]: GroupedCard } = {};
 
-          data.forEach(card => {
+          data.forEach((card: CardProduct) => {
             const key = `${card.name}-${card.set_name}-${card.card_number}`;
 
             if (!groupedCards[key]) {
