@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { AdminNav } from "@/components/admin-nav"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import supabase from "@/lib/supabase"
@@ -12,14 +11,14 @@ interface UserProfile {
   id: string
   email: string
   username: string
-  full_name: string
-  role: string
   is_admin: boolean
   created_at: string
+  updated_at: string
+  profile_data: any
 }
 
 export default function AdminUsersPage() {
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth()
+  const { userProfile, isAuthenticated, isLoading: authLoading, signOut } = useAuth()
   const [userName, setUserName] = useState("Admin")
   const [users, setUsers] = useState<UserProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -28,43 +27,12 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     // If user data is available, update the displayed name
-    if (user?.user_metadata?.full_name) {
-      setUserName(user.user_metadata.full_name)
-    } else if (user?.email) {
-      setUserName(user.email.split('@')[0])
+    if (userProfile?.email) {
+      setUserName(userProfile.email.split('@')[0])
     }
-  }, [user])
+  }, [userProfile])
 
-  // Check if the current user is an admin
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!isAuthenticated || authLoading) return
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user?.id)
-          .single()
-        
-        if (error) {
-          console.error('Error checking admin status:', error)
-          router.push('/')
-          return
-        }
-
-        if (!data || !data.is_admin) {
-          console.error('User is not an admin')
-          router.push('/')
-        }
-      } catch (err) {
-        console.error('Error:', err)
-        router.push('/')
-      }
-    }
-
-    checkAdminStatus()
-  }, [isAuthenticated, authLoading, user, router])
+  // No need to check admin status here as it's already handled by the ProtectedRoute component
 
   // Fetch all users
   useEffect(() => {
@@ -76,10 +44,10 @@ export default function AdminUsersPage() {
 
       try {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('users')
           .select('*')
           .order('created_at', { ascending: false })
-        
+
         if (error) {
           setError(error.message)
         } else {
@@ -98,10 +66,10 @@ export default function AdminUsersPage() {
 
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase.rpc(
-        'set_admin_role',
-        { user_id: userId, set_admin: !currentStatus }
-      )
+      const { error } = await supabase
+        .from('users')
+        .update({ is_admin: !currentStatus })
+        .eq('id', userId)
 
       if (error) {
         setError(error.message)
@@ -109,13 +77,9 @@ export default function AdminUsersPage() {
       }
 
       // Update the local state
-      setUsers(users.map(user => 
-        user.id === userId 
-          ? { 
-              ...user, 
-              is_admin: !currentStatus,
-              role: !currentStatus ? 'admin' : 'user' 
-            } 
+      setUsers(users.map(user =>
+        user.id === userId
+          ? { ...user, is_admin: !currentStatus }
           : user
       ))
     } catch (err) {
@@ -125,7 +89,7 @@ export default function AdminUsersPage() {
   }
 
   const handleLogout = async () => {
-    await logout()
+    await signOut()
     router.push('/login')
   }
 
@@ -138,127 +102,112 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AdminNav />
-      <div className="flex-1 flex flex-col">
-        {/* Admin Header */}
-        <header className="border-b bg-white">
-          <div className="container flex h-16 items-center justify-between px-4">
-            <h1 className="text-2xl font-bold">User Management</h1>
-            <div className="flex items-center gap-4">
-              <span>Welcome, {userName}!</span>
-              <Button variant="link" className="text-black hover:text-gray-700" onClick={handleLogout}>
-                Log out
-              </Button>
-              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-purple-500"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-            </div>
+    <div className="min-h-screen">
+      <div className="py-10">
+        <header>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+              User Management
+            </h1>
           </div>
         </header>
+        <main>
+          <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="px-4 py-8 sm:px-0">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Users</h2>
+                <Button onClick={handleLogout} variant="outline">
+                  Logout
+                </Button>
+              </div>
 
-        <main className="flex-1 p-6">
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+              {error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Username
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center">
-                        Loading users...
-                      </td>
-                    </tr>
-                  ) : users.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center">
-                        No users found
-                      </td>
-                    </tr>
-                  ) : (
-                    users.map((profile) => (
-                      <tr key={profile.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{profile.full_name || 'Not set'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{profile.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{profile.username || 'Not set'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            profile.is_admin 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {profile.role || (profile.is_admin ? 'admin' : 'user')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(profile.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => toggleAdminStatus(profile.id, profile.is_admin)}
-                            className="mr-2"
-                          >
-                            {profile.is_admin ? 'Remove Admin' : 'Make Admin'}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <div className="mt-8 flex flex-col">
+                <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                  <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                      <table className="min-w-full divide-y divide-gray-300">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                              Email
+                            </th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                              Username
+                            </th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                              Role
+                            </th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                              Created At
+                            </th>
+                            <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                              <span className="sr-only">Actions</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {isLoading ? (
+                            <tr>
+                              <td colSpan={5} className="px-6 py-4 text-center">
+                                Loading users...
+                              </td>
+                            </tr>
+                          ) : users.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-6 py-4 text-center">
+                                No users found
+                              </td>
+                            </tr>
+                          ) : (
+                            users.map((user) => (
+                              <tr key={user.id}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">{user.email}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-500">{user.username}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    user.is_admin
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {user.is_admin ? 'admin' : 'user'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {new Date(user.created_at).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleAdminStatus(user.id, user.is_admin)}
+                                    className="mr-2"
+                                  >
+                                    {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
       </div>
     </div>
   )
-} 
+}

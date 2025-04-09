@@ -1,0 +1,5 @@
+[33mcommit cc473637aa9a201186f315ec53ced9bc6d6b23fc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Vito-Gandeza <vito_gandeza@dlsu.edu.ph>
+Date:   Thu Apr 3 01:14:25 2025 +0800
+
+    Add admin dashboard with user management, card management, and statistics

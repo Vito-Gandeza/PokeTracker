@@ -13,6 +13,7 @@ export default function BrowseCards() {
             src="/images/browse_cover.png"
             alt="Pokemon cards collection"
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -33,4 +34,4 @@ export default function BrowseCards() {
       </section>
     </div>
   )
-} 
+}

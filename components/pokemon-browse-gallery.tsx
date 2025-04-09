@@ -70,13 +70,13 @@ export default function PokemonBrowseGallery() {
           'X-Api-Key': API_KEY
         }
       })
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch sets: ${response.status}`)
       }
-      
+
       const data = await response.json()
-      
+
       return data.data.map((set: any) => ({
         label: set.name,
         value: set.id,
@@ -92,22 +92,22 @@ export default function PokemonBrowseGallery() {
   const fetchCards = async (params: Record<string, any>) => {
     try {
       const queryParams = new URLSearchParams()
-      
+
       // Add all params to query string
       Object.entries(params).forEach(([key, value]) => {
         queryParams.append(key, String(value))
       })
-      
+
       const response = await fetch(`https://api.pokemontcg.io/v2/cards?${queryParams.toString()}`, {
         headers: {
           'X-Api-Key': API_KEY
         }
       })
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch cards: ${response.status}`)
       }
-      
+
       const data = await response.json()
       return data.data
     } catch (err) {
@@ -122,19 +122,19 @@ export default function PokemonBrowseGallery() {
       try {
         setLoading(true)
         setError(null)
-        
+
         // Fetch sets if we don't have them yet
         if (sets.length === 0) {
           const fetchedSets = await fetchSets()
           setSets(fetchedSets)
         }
-        
+
         // Build query parameters
         let queryString = ""
         let params: Record<string, any> = {
           pageSize: 20 // Reduced for faster loading
         }
-                
+
         // Add search query if present
         if (searchQuery) {
           queryString += `name:"${searchQuery}*"`
@@ -153,7 +153,7 @@ export default function PokemonBrowseGallery() {
           const collectionQuery = 'set.name:151'
           queryString = queryString ? `${queryString} ${collectionQuery}` : collectionQuery
         }
-        
+
         // Handle Prismatic Evolutions
         const selectedPrismatic = selectedCollections.find(c => c.value === "prismatic-evolutions")?.checked
         if (selectedPrismatic) {
@@ -184,7 +184,7 @@ export default function PokemonBrowseGallery() {
     // Check if card has price data
     let hasPrice = false
     let price = 0
-    
+
     if (card.tcgplayer && card.tcgplayer.prices) {
       // Get the lowest price from normal, holofoil, reverseHolofoil, etc.
       const prices = Object.values(card.tcgplayer.prices) as CardPrice[]
@@ -193,12 +193,12 @@ export default function PokemonBrowseGallery() {
         hasPrice = price > 0
       }
     } else if (card.cardmarket && card.cardmarket.prices) {
-      price = card.cardmarket.prices.averageSellPrice || 
-              card.cardmarket.prices.trendPrice || 
+      price = card.cardmarket.prices.averageSellPrice ||
+              card.cardmarket.prices.trendPrice ||
               0
       hasPrice = price > 0
     }
-    
+
     return !hasPrice || (price >= priceRange[0] && price <= priceRange[1])
   })
 
@@ -207,7 +207,7 @@ export default function PokemonBrowseGallery() {
     if (activeSort === "new") {
       return 0 // Assume API already returns by newest
     }
-    
+
     // Get prices for comparison
     const getPriceForCard = (card: any): number => {
       if (card.tcgplayer && card.tcgplayer.prices) {
@@ -216,22 +216,22 @@ export default function PokemonBrowseGallery() {
           return Math.min(...prices.map(p => p.market || p.mid || p.low || 0).filter(p => p > 0)) || 0
         }
       } else if (card.cardmarket && card.cardmarket.prices) {
-        return card.cardmarket.prices.averageSellPrice || 
-               card.cardmarket.prices.trendPrice || 
+        return card.cardmarket.prices.averageSellPrice ||
+               card.cardmarket.prices.trendPrice ||
                0
       }
       return 0
     }
-    
+
     const priceA = getPriceForCard(a)
     const priceB = getPriceForCard(b)
-    
+
     if (activeSort === "price-ascending") {
       return priceA - priceB
     } else if (activeSort === "price-descending") {
       return priceB - priceA
     }
-    
+
     return 0 // Default case
   })
 
@@ -267,8 +267,8 @@ export default function PokemonBrowseGallery() {
         return price > 0 ? `$${price.toFixed(2)}` : "$0"
       }
     } else if (card.cardmarket && card.cardmarket.prices) {
-      const price = card.cardmarket.prices.averageSellPrice || 
-                    card.cardmarket.prices.trendPrice || 
+      const price = card.cardmarket.prices.averageSellPrice ||
+                    card.cardmarket.prices.trendPrice ||
                     0
       return price > 0 ? `${price.toFixed(2)} €` : "€0"
     }
@@ -288,17 +288,17 @@ export default function PokemonBrowseGallery() {
   // Default cards if no search criteria
   useEffect(() => {
     // Only load default cards if no other search is active
-    if (!loading && cards.length === 0 && !error && !searchQuery && 
-        !sets.some(set => set.checked) && 
+    if (!loading && cards.length === 0 && !error && !searchQuery &&
+        !sets.some(set => set.checked) &&
         !selectedCollections.some(coll => coll.checked)) {
       const loadDefaultCards = async () => {
         try {
           setLoading(true)
           // Get some recent cards from Scarlet & Violet series
-          const defaultCards = await fetchCards({ 
-            q: 'set.series:"Scarlet & Violet"', 
-            orderBy: "-releaseDate", 
-            pageSize: 20 
+          const defaultCards = await fetchCards({
+            q: 'set.series:"Scarlet & Violet"',
+            orderBy: "-releaseDate",
+            pageSize: 20
           })
           setCards(defaultCards)
           setLoading(false)
@@ -308,7 +308,7 @@ export default function PokemonBrowseGallery() {
           setLoading(false)
         }
       }
-      
+
       loadDefaultCards()
     }
   }, [loading, cards.length, error, searchQuery, sets, selectedCollections])
@@ -328,7 +328,7 @@ export default function PokemonBrowseGallery() {
               className="w-full"
             />
           </div>
-          
+
           {/* Type Filters */}
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedTypes.map((type) => (
@@ -421,8 +421,8 @@ export default function PokemonBrowseGallery() {
               onClick={() => setActiveSort(sort as SortOption)}
               className={activeSort === sort ? "bg-black text-white" : ""}
             >
-              {sort === "new" ? "New" : 
-               sort === "price-ascending" ? "Price ascending" : 
+              {sort === "new" ? "New" :
+               sort === "price-ascending" ? "Price ascending" :
                "Price descending"}
             </Button>
           ))}
@@ -452,6 +452,7 @@ export default function PokemonBrowseGallery() {
                     src={card.images?.small || card.images?.large || '/placeholder.svg'}
                     alt={card.name}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 25vw"
                     className="object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -467,7 +468,7 @@ export default function PokemonBrowseGallery() {
                 </div>
               </CardUI>
             ))}
-            
+
             {sortedCards.length === 0 && (
               <div className="col-span-full text-center py-8">
                 <p>No cards found matching your filters.</p>
@@ -481,4 +482,4 @@ export default function PokemonBrowseGallery() {
       </div>
     </div>
   )
-} 
+}

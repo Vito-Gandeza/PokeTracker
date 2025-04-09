@@ -58,3 +58,83 @@
   }
 }
 
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Swiper custom styles */
+.swiper {
+  overflow: hidden !important;
+  padding: 12px 0;
+  position: relative;
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: grab;
+}
+
+.swiper:active {
+  cursor: grabbing !important;
+}
+
+/* Prevent text selection when dragging */
+.no-select {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.swiper-slide {
+  display: flex;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  user-drag: none;
+  -webkit-user-drag: none;
+}
+
+.swiper-slide:hover {
+  z-index: 1;
+}
+
+/* Add a subtle gradient mask to the edges for a fade effect */
+.relative.w-full:has(.swiper)::before,
+.relative.w-full:has(.swiper)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.relative.w-full:has(.swiper)::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0));
+}
+
+.relative.w-full:has(.swiper)::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,255,255,0));
+}
+
+.dark .relative.w-full:has(.swiper)::before {
+  background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(0,0,0,0));
+}
+
+.dark .relative.w-full:has(.swiper)::after {
+  background: linear-gradient(to left, rgba(0,0,0,0.9), rgba(0,0,0,0));
+}
+
