@@ -35,9 +35,13 @@ interface CardAttack {
 interface RelatedProduct {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   image_url: string;
   price: number;
+  rarity?: string;
+  set_name?: string;
+  card_number?: string;
+  condition?: string;
 }
 
 // Generate fallback cards when database is not available
