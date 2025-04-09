@@ -11,8 +11,6 @@ import EnhancedCardCarousel from "@/components/enhanced-card-carousel"
 import CardSetGrid from "@/components/card-set-grid"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { ChevronRight, Sparkles, Star, TrendingUp, Award, Clock, Grid } from "lucide-react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
 import dynamic from "next/dynamic"
 
 // Import client-side only components
@@ -26,9 +24,21 @@ const AnimatedShapes = dynamic(
   { ssr: false }
 )
 
-// Register GSAP plugins
+// Import client-side only components with dynamic imports
+let gsap: any;
+let ScrollTrigger: any;
+
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  // Only import GSAP on the client side
+  import("gsap").then((module) => {
+    gsap = module.default;
+    // Import ScrollTrigger
+    import("gsap/ScrollTrigger").then((module) => {
+      ScrollTrigger = module.ScrollTrigger;
+      // Register the plugin
+      gsap.registerPlugin(ScrollTrigger);
+    });
+  });
 }
 
 export default function Home() {
@@ -67,7 +77,10 @@ export default function Home() {
 
     // Cleanup
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      // Only run cleanup if ScrollTrigger is available
+      if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger?.getAll) {
+        ScrollTrigger.getAll().forEach((trigger: any) => trigger.kill());
+      }
     };
   }, []);
   return (
