@@ -27,7 +27,7 @@ export function useApi<T = any>(
   options: ApiOptions<T> = {}
 ): ApiState<T> {
   const { initialData, dependencyArray = [], onSuccess, onError } = options;
-  const { isAuthenticated, session } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [data, setData] = useState<T | null>(initialData || null);
   const [error, setError] = useState<PostgrestError | Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +43,7 @@ export function useApi<T = any>(
 
     try {
       const response = await fetchFn();
-      
+
       if (response.error) {
         setError(response.error);
         onError?.(response.error);
@@ -77,13 +77,13 @@ export function useApi<T = any>(
 export function createQuery<T = any>(table: string, queryFn?: (query: any) => any) {
   return async (): Promise<PostgrestResponse<T> | PostgrestSingleResponse<T>> => {
     let query = supabase.from(table).select('*');
-    
+
     if (queryFn) {
       return await queryFn(supabase.from(table));
     }
-    
+
     return await query;
   };
 }
 
-export default useApi; 
+export default useApi;
