@@ -42,7 +42,12 @@ const nextConfig = {
     // Optimize server components
     serverComponentsExternalPackages: [],
     // Optimize client-side navigation
-    optimizeCss: true,
+    optimizeCss: {
+      // Use critters for CSS optimization
+      minifier: true,
+      // Avoid issues with CSS modules
+      skipMinification: true,
+    },
   },
 };
 
