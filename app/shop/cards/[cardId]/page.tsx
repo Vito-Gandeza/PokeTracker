@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Heart, Share2, LogIn } from 'lucide-react';
+import { ShoppingCart, Heart, Share2, LogIn, RefreshCw } from 'lucide-react';
 import RelatedProducts from '@/components/related-products';
+import { useCurrency } from '@/lib/currency-context';
 
 interface CardDetails {
   id: string;
@@ -44,81 +45,7 @@ interface RelatedProduct {
   condition?: string;
 }
 
-// Generate fallback cards when database is not available
-function generateFallbackCards(): CardDetails[] {
-  return [
-    {
-      id: 'fallback-1',
-      name: 'Pikachu',
-      image_url: 'https://images.pokemontcg.io/base1/58_hires.png',
-      price: 24.99,
-      rarity: 'Common',
-      set_name: 'Base Set',
-      card_number: '58',
-      condition: 'Excellent',
-      description: 'When several of these Pokémon gather, their electricity can build and cause lightning storms.',
-      seller_notes: 'Classic Pikachu card from the original Base Set. In excellent condition with minimal edge wear.'
-    },
-    {
-      id: 'fallback-2',
-      name: 'Charizard',
-      image_url: 'https://images.pokemontcg.io/base1/4_hires.png',
-      price: 299.99,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '4',
-      condition: 'Near Mint',
-      description: 'Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.',
-      seller_notes: 'Highly sought-after Charizard from Base Set. Near mint condition with beautiful holo pattern.'
-    }
-  ];
-}
 
-// Generate fallback related products
-function generateFallbackRelatedProducts(): RelatedProduct[] {
-  return [
-    {
-      id: 'fallback-3',
-      name: 'Blastoise',
-      image_url: 'https://images.pokemontcg.io/base1/2_hires.png',
-      price: 180.50,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '2',
-      condition: 'Near Mint'
-    },
-    {
-      id: 'fallback-4',
-      name: 'Venusaur',
-      image_url: 'https://images.pokemontcg.io/base1/15_hires.png',
-      price: 165.75,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '15',
-      condition: 'Excellent'
-    },
-    {
-      id: 'fallback-5',
-      name: 'Mewtwo',
-      image_url: 'https://images.pokemontcg.io/base1/10_hires.png',
-      price: 145.00,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '10',
-      condition: 'Near Mint'
-    },
-    {
-      id: 'fallback-6',
-      name: 'Jigglypuff',
-      image_url: 'https://images.pokemontcg.io/base1/54_hires.png',
-      price: 12.50,
-      rarity: 'Common',
-      set_name: 'Base Set',
-      card_number: '54',
-      condition: 'Mint'
-    }
-  ];
-}
 
 export default function CardDetailPage({ params }: { params: { cardId: string } }) {
   // Initialize states
@@ -129,42 +56,24 @@ export default function CardDetailPage({ params }: { params: { cardId: string } 
   const { addItem } = useCart();
   const { isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
+  const { formatPrice } = useCurrency();
+  const [fetchAttempts, setFetchAttempts] = useState(0);
 
   // Fetch card details
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout | null = null;
 
-    // Immediately show fallback data to prevent blank screen
-    const showFallbackData = () => {
+    async function fetchCardData() {
       if (!isMounted) return;
 
-      const fallbackCards = generateFallbackCards();
-      const fallbackRelated = generateFallbackRelatedProducts();
+      setLoading(true);
+      setError(null);
 
-      // If it's a fallback ID, find the matching card
-      if (params.cardId.startsWith('fallback-')) {
-        const fallbackCard = fallbackCards.find(card => card.id === params.cardId) || fallbackCards[0];
-        setCard(fallbackCard);
-      } else {
-        // For real IDs, use a fallback but with the correct ID
-        const fallbackCard = { ...fallbackCards[0], id: params.cardId };
-        setCard(fallbackCard);
-      }
-
-      setRelatedProducts(fallbackRelated);
-      setLoading(false);
-    };
-
-    // Show fallback data immediately
-    showFallbackData();
-
-    async function fetchRealCardData() {
       try {
-        console.log('Fetching real card data for ID:', params.cardId);
+        console.log('Fetching card data for ID:', params.cardId);
         const supabase = createClient();
 
-        // Attempt to fetch the real card data
+        // Attempt to fetch the card data
         const { data, error } = await supabase
           .from('cards')
           .select('*')
@@ -173,11 +82,13 @@ export default function CardDetailPage({ params }: { params: { cardId: string } 
 
         if (error) {
           console.log('Error fetching card:', error.message);
-          return; // Keep using fallback data
+          setError(`Error fetching card: ${error.message}. Try refreshing the page.`);
+          setLoading(false);
+          return;
         }
 
         if (isMounted && data) {
-          console.log('Successfully fetched real card data, replacing fallback');
+          console.log('Successfully fetched card data');
           setCard(data);
 
           // Fetch related products (other cards from the same set or similar rarity)
@@ -191,27 +102,31 @@ export default function CardDetailPage({ params }: { params: { cardId: string } 
           if (!relatedError && relatedData && relatedData.length > 0) {
             console.log('Successfully fetched related cards:', relatedData.length);
             setRelatedProducts(relatedData);
+          } else if (relatedError) {
+            console.error('Error fetching related cards:', relatedError.message);
           }
+
+          setLoading(false);
         }
       } catch (err) {
-        console.error('Error fetching real card data:', err);
-        // Keep using fallback data
+        console.error('Error fetching card data:', err);
+        setError('An unexpected error occurred. Please try refreshing the page.');
+        setLoading(false);
       }
     }
 
-    // Only try to fetch real data if it's not a fallback ID
-    if (!params.cardId.startsWith('fallback-')) {
-      fetchRealCardData();
-    }
+    fetchCardData();
 
     // Cleanup function
     return () => {
       isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
     };
-  }, [params.cardId]);
+  }, [params.cardId, fetchAttempts]);
+
+  // Function to manually refresh the data
+  const handleRefresh = () => {
+    setFetchAttempts(prev => prev + 1);
+  };
 
 
 
@@ -261,8 +176,14 @@ export default function CardDetailPage({ params }: { params: { cardId: string } 
   if (error || !card) {
     return (
       <div className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold mb-4">Error</h1>
-        <p>{error || 'Card not found'}</p>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Error</h1>
+          <p className="mb-6">{error || 'Card not found'}</p>
+          <Button onClick={handleRefresh} className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
     );
   }
@@ -340,7 +261,7 @@ export default function CardDetailPage({ params }: { params: { cardId: string } 
           </div>
           <h1 className="text-2xl font-bold mb-2">{card.name}</h1>
           <p className="text-sm mb-2">{card.condition || 'Mint'}</p>
-          <div className="text-2xl font-bold mb-6">${card.price?.toFixed(2) || 'Price unavailable'}</div>
+          <div className="text-2xl font-bold mb-6">{card.price ? formatPrice(card.price) : 'Price unavailable'}</div>
 
           {/* Stock Information */}
           <div className="mb-4">

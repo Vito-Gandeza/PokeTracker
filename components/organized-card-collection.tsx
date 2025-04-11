@@ -30,7 +30,8 @@ import {
   ChevronRight,
   ArrowUpDown,
   Star,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -62,122 +63,7 @@ interface OrganizedCardCollectionProps {
   groupBySet?: boolean;
 }
 
-// Generate fallback cards when database is not available
-function generateFallbackCards(): CardProduct[] {
-  return [
-    {
-      id: 'fallback-1',
-      name: 'Pikachu',
-      image_url: 'https://images.pokemontcg.io/base1/58_hires.png',
-      price: 24.99,
-      rarity: 'Common',
-      set_name: 'Base Set',
-      card_number: '58',
-      condition: 'Excellent',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-2',
-      name: 'Charizard',
-      image_url: 'https://images.pokemontcg.io/base1/4_hires.png',
-      price: 299.99,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '4',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-3',
-      name: 'Blastoise',
-      image_url: 'https://images.pokemontcg.io/base1/2_hires.png',
-      price: 180.50,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '2',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-4',
-      name: 'Venusaur',
-      image_url: 'https://images.pokemontcg.io/base1/15_hires.png',
-      price: 165.75,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '15',
-      condition: 'Excellent',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-5',
-      name: 'Mewtwo',
-      image_url: 'https://images.pokemontcg.io/base1/10_hires.png',
-      price: 145.00,
-      rarity: 'Rare Holo',
-      set_name: 'Base Set',
-      card_number: '10',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-6',
-      name: 'Jigglypuff',
-      image_url: 'https://images.pokemontcg.io/base1/54_hires.png',
-      price: 12.50,
-      rarity: 'Common',
-      set_name: 'Base Set',
-      card_number: '54',
-      condition: 'Mint',
-      created_at: new Date().toISOString()
-    },
-    // Add some cards from different sets
-    {
-      id: 'fallback-7',
-      name: 'Pikachu V',
-      image_url: 'https://images.pokemontcg.io/swsh4/44_hires.png',
-      price: 34.99,
-      rarity: 'Ultra Rare',
-      set_name: 'Vivid Voltage',
-      card_number: '44',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-8',
-      name: 'Charizard VMAX',
-      image_url: 'https://images.pokemontcg.io/swsh3/20_hires.png',
-      price: 199.99,
-      rarity: 'Ultra Rare',
-      set_name: 'Darkness Ablaze',
-      card_number: '20',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-9',
-      name: 'Mew VMAX',
-      image_url: 'https://images.pokemontcg.io/swsh8/114_hires.png',
-      price: 89.99,
-      rarity: 'Ultra Rare',
-      set_name: 'Fusion Strike',
-      card_number: '114',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'fallback-10',
-      name: 'Gengar VMAX',
-      image_url: 'https://images.pokemontcg.io/swsh8/157_hires.png',
-      price: 79.99,
-      rarity: 'Ultra Rare',
-      set_name: 'Fusion Strike',
-      card_number: '157',
-      condition: 'Near Mint',
-      created_at: new Date().toISOString()
-    }
-  ];
-}
+
 
 // Helper function to get rarity color
 function getRarityColor(rarity: string): string {
@@ -203,23 +89,22 @@ export default function OrganizedCardCollection({
 }: OrganizedCardCollectionProps) {
   // Get currency context
   const { formatPrice } = useCurrency();
+
+  // Add refresh state
+  const [fetchAttempts, setFetchAttempts] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   // State for pagination
   const [limit, setLimit] = useState(initialLimit);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  // Initialize with fallback data
-  const fallbackCards = generateFallbackCards();
-  const fallbackSets = [...new Set(fallbackCards.map(card => card.set_name))] as string[];
-  const fallbackRarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
-
-  const [cards, setCards] = useState<CardProduct[]>(fallbackCards);
-  const [loading, setLoading] = useState(false); // Start with loading false since we have fallback data
+  const [cards, setCards] = useState<CardProduct[]>([]);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('set-name');
   const [setFilter, setSetFilter] = useState(initialSetFilter || 'all');
   const [rarityFilter, setRarityFilter] = useState<string[]>([]);
-  const [availableSets, setAvailableSets] = useState<string[]>(fallbackSets);
-  const [availableRarities, setAvailableRarities] = useState<string[]>(fallbackRarities);
+  const [availableSets, setAvailableSets] = useState<string[]>([]);
+  const [availableRarities, setAvailableRarities] = useState<string[]>([]);
   const [expandedSets, setExpandedSets] = useState<Record<string, boolean>>({});
 
   // Fetch all available sets first
@@ -265,6 +150,8 @@ export default function OrganizedCardCollection({
     if (cards.length === 0) {
       setLoading(true);
     }
+
+
 
     async function fetchCards() {
       console.log('OrganizedCardCollection: Fetching cards with filters:', {
@@ -358,41 +245,20 @@ export default function OrganizedCardCollection({
           });
           setExpandedSets(initialExpandedState);
         } else if (isMounted) {
-          // Fallback data if no cards are found
-          console.log('OrganizedCardCollection: No cards found, using fallback data');
-          const fallbackCards = generateFallbackCards();
-          setCards(fallbackCards);
-
-          // Extract unique rarities for filters from fallback data
-          const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
-          setAvailableRarities(rarities);
-
-          // Initialize expanded state for all sets
-          const initialExpandedState: Record<string, boolean> = {};
-          availableSets.forEach(set => {
-            initialExpandedState[set] = true; // Start with all expanded
-          });
-          setExpandedSets(initialExpandedState);
+          // No cards found
+          console.log('OrganizedCardCollection: No cards found');
+          setCards([]);
+          setError('No cards found. Try adjusting your filters or refreshing the page.');
         }
       } catch (err) {
         console.error('OrganizedCardCollection: Error fetching cards:', err);
 
-        // Only use fallback data if we don't have any cards yet and component is still mounted
-        if (isMounted && cards.length === 0) {
-          console.log('OrganizedCardCollection: Using fallback data due to error');
-          const fallbackCards = generateFallbackCards();
-          setCards(fallbackCards);
-
-          // Extract unique rarities for filters from fallback data
-          const rarities = [...new Set(fallbackCards.map(card => card.rarity))] as string[];
-          setAvailableRarities(rarities);
-
-          // Initialize expanded state for all sets
-          const initialExpandedState: Record<string, boolean> = {};
-          availableSets.forEach(set => {
-            initialExpandedState[set] = true; // Start with all expanded
-          });
-          setExpandedSets(initialExpandedState);
+        // Set error message
+        if (isMounted) {
+          setError('Error fetching cards. Please try refreshing the page.');
+          if (cards.length === 0) {
+            setCards([]);
+          }
         }
       } finally {
         if (isMounted) {
@@ -408,7 +274,19 @@ export default function OrganizedCardCollection({
     return () => {
       isMounted = false;
     };
-  }, [searchQuery, sortOption, setFilter, rarityFilter, limit, groupBySet]);
+  }, [searchQuery, sortOption, setFilter, rarityFilter, limit, groupBySet, fetchAttempts]);
+
+  // Add a function to load more cards
+  const loadMoreCards = () => {
+    setLimit(prevLimit => prevLimit + initialLimit);
+    setIsLoadingMore(true);
+  };
+
+  // Add a function to refresh the cards
+  const handleRefresh = () => {
+    setError(null);
+    setFetchAttempts(prev => prev + 1);
+  };
 
   // Group cards by name, set, and card number
   const groupedCards = useMemo(() => {
@@ -485,6 +363,30 @@ export default function OrganizedCardCollection({
       <div className="flex flex-col items-center justify-center p-12 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-800 shadow-md">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
         <p className="text-lg text-gray-600 dark:text-gray-400">Loading cards...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center p-12 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-800 shadow-md">
+        <div className="relative w-24 h-24 mb-6 opacity-50">
+          <Image
+            src="/images/card-placeholder.png"
+            alt="Error loading cards"
+            fill
+            className="object-contain"
+          />
+        </div>
+        <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-200">Error Loading Cards</h3>
+        <p className="text-lg mb-6 text-center text-gray-600 dark:text-gray-400">{error}</p>
+        <Button
+          onClick={handleRefresh}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
     );
   }

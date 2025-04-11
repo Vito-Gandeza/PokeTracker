@@ -1,39 +1,60 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient, executeWithRetry } from '@/lib/supabase-client';
 
-// Create a client for testing
-const supabase = createClient();
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        // Test regular client
-        const { data: cards, error: cardsError } = await supabase
-            .from('cards')
-            .select('*')
-            .limit(1);
+        // Create a client for testing
+        const supabase = createClient();
+
+        // Test connection with retry logic
+        const { data: cards, error: cardsError } = await executeWithRetry(async () => {
+            return await supabase
+                .from('cards')
+                .select('id, name')
+                .limit(1);
+        });
 
         if (cardsError) {
-            console.error('Regular client error:', cardsError);
+            console.error('Connection test failed:', cardsError);
             return NextResponse.json(
-                { error: 'Regular client connection failed', details: cardsError },
+                {
+                    success: false,
+                    message: 'Database connection failed',
+                    error: cardsError.message,
+                    timestamp: new Date().toISOString()
+                },
                 { status: 500 }
             );
         }
 
-        // We're not testing admin client in this version
-        const users = null;
+        // Check server time to verify full connection
+        const { data: timeData, error: timeError } = await executeWithRetry(async () => {
+            return await supabase.rpc('get_server_time');
+        }).catch(err => ({ data: null, error: err }));
+
+        if (timeError) {
+            console.warn('Server time check failed:', timeError);
+        }
 
         return NextResponse.json({
             success: true,
-            message: 'Supabase connection is working correctly',
-            cards: cards,
-            users: users,
-            adminAvailable: false
+            message: 'Connection is working correctly',
+            timestamp: new Date().toISOString(),
+            serverTime: timeData || null,
+            testData: cards ? { count: cards.length } : null
         });
     } catch (error) {
         console.error('Test connection error:', error);
         return NextResponse.json(
-            { error: 'Connection test failed', details: error },
+            {
+                success: false,
+                message: 'Connection test failed',
+                error: error instanceof Error ? error.message : 'Unknown error',
+                timestamp: new Date().toISOString()
+            },
             { status: 500 }
         );
     }
