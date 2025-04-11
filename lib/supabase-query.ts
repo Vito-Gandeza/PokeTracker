@@ -98,20 +98,24 @@ export async function executeQuery<T = any>(
     }
 
     // Execute query with retry logic
-    const response = await executeWithRetry(() => queryFn(query), retries);
+    const response = await executeWithRetry<PostgrestSingleResponse<T> | PostgrestResponse<T>>(() => queryFn(query), retries);
 
-    if (response.error) {
+    if ('error' in response && response.error) {
       onError?.(response.error);
       return { data: null, error: response.error };
     }
 
     // Store in cache with custom TTL if provided
-    if (!skipCache) {
+    if (!skipCache && 'data' in response) {
       storeInCache(cacheKey, response.data);
     }
 
-    onSuccess?.(response.data);
-    return { data: response.data, error: null };
+    if ('data' in response) {
+      onSuccess?.(response.data);
+      return { data: response.data, error: null };
+    }
+
+    return { data: null, error: new Error('No data returned') };
   } catch (err) {
     const error = err instanceof Error ? err : new Error('An unknown error occurred');
     onError?.(error);
@@ -207,23 +211,25 @@ export function usePaginatedQuery<T = any>(
       const query = supabase.from(table);
 
       // Execute query with retry logic
-      const response = await executeWithRetry(
+      const response = await executeWithRetry<PostgrestResponse<T>>(
         () => queryBuilder(query, pageNum, pageSize + 1), // Fetch one extra item to check if there are more
         options.retries || 3
       );
 
-      if (response.error) {
+      if ('error' in response && response.error) {
         setError(response.error);
         options.onError?.(response.error);
         return;
       }
 
       // Check if there are more items
-      const hasMoreItems = response.data.length > pageSize;
+      const hasMoreItems = 'data' in response && Array.isArray(response.data) && response.data.length > pageSize;
       setHasMore(hasMoreItems);
 
       // Remove the extra item we used to check for more
-      const pageData = hasMoreItems ? response.data.slice(0, pageSize) : response.data;
+      const pageData = hasMoreItems && 'data' in response && Array.isArray(response.data)
+        ? response.data.slice(0, pageSize)
+        : 'data' in response ? response.data : [];
 
       // Update data state
       if (append) {
