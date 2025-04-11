@@ -72,22 +72,22 @@ export async function executeQuery<T = any>(
   table: string,
   queryFn: (query: any) => Promise<PostgrestSingleResponse<T> | PostgrestResponse<T>>,
   options: QueryOptions = {}
-): Promise<{ data: T | null; error: PostgrestError | Error | null }> {
-  const { 
-    cacheTime = CACHE_TTL, 
-    skipCache = false, 
+): Promise<{ data: T | T[] | null; error: PostgrestError | Error | null }> {
+  const {
+    cacheTime = CACHE_TTL,
+    skipCache = false,
     retries = 3,
     onSuccess,
     onError
   } = options;
-  
+
   try {
     const supabase = createClient();
     const query = supabase.from(table);
-    
+
     // Generate cache key
     const cacheKey = generateCacheKey(table, queryFn.toString());
-    
+
     // Check cache first if not skipping
     if (!skipCache && isCacheValid(cacheKey)) {
       const cachedData = getFromCache(cacheKey);
@@ -96,20 +96,20 @@ export async function executeQuery<T = any>(
         return { data: cachedData, error: null };
       }
     }
-    
+
     // Execute query with retry logic
     const response = await executeWithRetry(() => queryFn(query), retries);
-    
+
     if (response.error) {
       onError?.(response.error);
       return { data: null, error: response.error };
     }
-    
+
     // Store in cache with custom TTL if provided
     if (!skipCache) {
       storeInCache(cacheKey, response.data);
     }
-    
+
     onSuccess?.(response.data);
     return { data: response.data, error: null };
   } catch (err) {
@@ -128,7 +128,7 @@ export function useSupabaseQuery<T = any>(
   dependencies: any[] = [],
   options: QueryOptions = {}
 ) {
-  const [data, setData] = useState<T | null>(null);
+  const [data, setData] = useState<T | T[] | null>(null);
   const [error, setError] = useState<PostgrestError | Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefetching, setIsRefetching] = useState<boolean>(false);
@@ -139,7 +139,7 @@ export function useSupabaseQuery<T = any>(
     } else {
       setIsRefetching(true);
     }
-    
+
     const { data: responseData, error: responseError } = await executeQuery<T>(
       table,
       queryBuilder,
@@ -155,13 +155,13 @@ export function useSupabaseQuery<T = any>(
         }
       }
     );
-    
+
     if (showLoading) {
       setIsLoading(false);
     } else {
       setIsRefetching(false);
     }
-    
+
     return { data: responseData, error: responseError };
   }, [table, queryBuilder, options]);
 
@@ -201,37 +201,37 @@ export function usePaginatedQuery<T = any>(
     } else {
       setIsLoadingMore(true);
     }
-    
+
     try {
       const supabase = createClient();
       const query = supabase.from(table);
-      
+
       // Execute query with retry logic
       const response = await executeWithRetry(
         () => queryBuilder(query, pageNum, pageSize + 1), // Fetch one extra item to check if there are more
         options.retries || 3
       );
-      
+
       if (response.error) {
         setError(response.error);
         options.onError?.(response.error);
         return;
       }
-      
+
       // Check if there are more items
       const hasMoreItems = response.data.length > pageSize;
       setHasMore(hasMoreItems);
-      
+
       // Remove the extra item we used to check for more
       const pageData = hasMoreItems ? response.data.slice(0, pageSize) : response.data;
-      
+
       // Update data state
       if (append) {
         setData(prevData => [...prevData, ...pageData]);
       } else {
         setData(pageData);
       }
-      
+
       options.onSuccess?.(pageData);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('An unknown error occurred');
@@ -267,14 +267,14 @@ export function usePaginatedQuery<T = any>(
     await fetchPage(1, false);
   }, [fetchPage]);
 
-  return { 
-    data, 
-    error, 
-    isLoading, 
-    isLoadingMore, 
-    hasMore, 
-    loadMore, 
-    refresh, 
-    page 
+  return {
+    data,
+    error,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    refresh,
+    page
   };
 }
